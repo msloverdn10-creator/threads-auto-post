@@ -1,1 +1,36 @@
+name: Threads Token Refresh
 
+on:
+  workflow_dispatch:
+  schedule:
+    # 매주 월요일 03:00 UTC (60일 만료 훨씬 전에 미리 갱신)
+    - cron: '0 3 * * 1'
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: pip install requests pynacl
+
+      - name: 토큰 갱신 및 Secrets 반영
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_REPO: ${{ github.repository }}
+          ACCOUNT1_TOKEN: ${{ secrets.ACCOUNT1_TOKEN }}
+          ACCOUNT2_TOKEN: ${{ secrets.ACCOUNT2_TOKEN }}
+          ACCOUNT3_TOKEN: ${{ secrets.ACCOUNT3_TOKEN }}
+          ACCOUNT4_TOKEN: ${{ secrets.ACCOUNT4_TOKEN }}
+          ACCOUNT5_TOKEN: ${{ secrets.ACCOUNT5_TOKEN }}
+          ACCOUNT6_TOKEN: ${{ secrets.ACCOUNT6_TOKEN }}
+          ACCOUNT7_TOKEN: ${{ secrets.ACCOUNT7_TOKEN }}
+          ACCOUNT8_TOKEN: ${{ secrets.ACCOUNT8_TOKEN }}
+          ACCOUNT9_TOKEN: ${{ secrets.ACCOUNT9_TOKEN }}
+          ACCOUNT10_TOKEN: ${{ secrets.ACCOUNT10_TOKEN }}
+        run: python scripts/refresh_tokens.py

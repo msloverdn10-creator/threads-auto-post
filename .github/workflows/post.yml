@@ -1,1 +1,86 @@
+name: Threads Multi-Account Auto Post
 
+on:
+  workflow_dispatch:
+    # schedule 블록을 제거했습니다. 대신 cron-job.org가 아래 API를 매시간 호출해서
+    # 이 워크플로우를 "깨우기"만 합니다. 실제로 게시할지는 아래 "간격 사전 확인" 단계가 판단합니다.
+    # POST https://api.github.com/repos/{owner}/{repo}/actions/workflows/post.yml/dispatches
+    # body: {"ref": "main"}
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Actions 사용 시간(분) 절약의 핵심 단계.
+      # Python 설치/라이브러리 설치 같은 무거운 작업을 하기 전에,
+      # bash + jq만으로 "마지막 게시로부터 7시간이 지났는지"를 먼저 확인한다.
+      # 아직 안 지났으면 이후 단계는 전부 건너뛰고 몇 초 만에 종료 -> 사용 시간 거의 소모 안 함.
+      - name: 게시 간격 사전 확인 (7시간)
+        id: gate
+        run: |
+          MIN_INTERVAL_HOURS=7
+          if [ -f indexes/last_run.json ]; then
+            last_run=$(jq -r '.last_run_utc' indexes/last_run.json)
+            last_epoch=$(date -d "$last_run" +%s)
+            now_epoch=$(date -u +%s)
+            elapsed_hours=$(( (now_epoch - last_epoch) / 3600 ))
+            if [ "$elapsed_hours" -ge "$MIN_INTERVAL_HOURS" ]; then
+              echo "✅ ${elapsed_hours}시간 경과 - 게시를 진행합니다."
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+            else
+              remaining=$(( MIN_INTERVAL_HOURS - elapsed_hours ))
+              echo "⏳ ${elapsed_hours}시간 경과, 약 ${remaining}시간 더 기다려야 합니다. 이번 실행은 건너뜁니다."
+              echo "ready=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "✅ 첫 실행으로 보입니다 - 게시를 진행합니다."
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        if: steps.gate.outputs.ready == 'true'
+        run: pip install requests
+
+      - name: 게시 실행 (계정 10개, 계정별 무작위 지연 포함)
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          ACCOUNT1_TOKEN: ${{ secrets.ACCOUNT1_TOKEN }}
+          ACCOUNT1_ID: ${{ secrets.ACCOUNT1_ID }}
+          ACCOUNT2_TOKEN: ${{ secrets.ACCOUNT2_TOKEN }}
+          ACCOUNT2_ID: ${{ secrets.ACCOUNT2_ID }}
+          ACCOUNT3_TOKEN: ${{ secrets.ACCOUNT3_TOKEN }}
+          ACCOUNT3_ID: ${{ secrets.ACCOUNT3_ID }}
+          ACCOUNT4_TOKEN: ${{ secrets.ACCOUNT4_TOKEN }}
+          ACCOUNT4_ID: ${{ secrets.ACCOUNT4_ID }}
+          ACCOUNT5_TOKEN: ${{ secrets.ACCOUNT5_TOKEN }}
+          ACCOUNT5_ID: ${{ secrets.ACCOUNT5_ID }}
+          ACCOUNT6_TOKEN: ${{ secrets.ACCOUNT6_TOKEN }}
+          ACCOUNT6_ID: ${{ secrets.ACCOUNT6_ID }}
+          ACCOUNT7_TOKEN: ${{ secrets.ACCOUNT7_TOKEN }}
+          ACCOUNT7_ID: ${{ secrets.ACCOUNT7_ID }}
+          ACCOUNT8_TOKEN: ${{ secrets.ACCOUNT8_TOKEN }}
+          ACCOUNT8_ID: ${{ secrets.ACCOUNT8_ID }}
+          ACCOUNT9_TOKEN: ${{ secrets.ACCOUNT9_TOKEN }}
+          ACCOUNT9_ID: ${{ secrets.ACCOUNT9_ID }}
+          ACCOUNT10_TOKEN: ${{ secrets.ACCOUNT10_TOKEN }}
+          ACCOUNT10_ID: ${{ secrets.ACCOUNT10_ID }}
+        run: python scripts/post.py
+
+      - name: 인덱스 변경사항 커밋
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add indexes/
+          git diff --staged --quiet || git commit -m "update indexes [skip ci]"
+          git pull --rebase
+          git push
