@@ -95,7 +95,7 @@ Threads API는 이미지 파일을 직접 업로드받지 않고, **공개적으
 2. 그 저장소에 `cards/` 폴더 안의 PNG 25개를 저장소 루트에 업로드합니다.
 3. 저장소 Settings → Pages → Source를 "Deploy from a branch" → `main` / `(root)`로 설정해서 **GitHub Pages를 켭니다**.
 4. 몇 분 후 `https://{깃허브아이디}.github.io/threads-post-cards/info-001.png` 같은 주소로 이미지가 공개됩니다.
-5. `posts/shared.json`의 `image` 필드 URL이 이 패턴(`https://msloverdn.github.io/threads-post-cards/{id}.png`)으로 이미 채워져 있으니, 저장소 이름이나 계정명을 다르게 하셨다면 `image` 값을 맞게 수정해주세요.
+5. `posts/shared.json`의 `image` 필드 URL이 이 패턴(`https://msloverdn10-creator.github.io/threads-post-cards/{id}.png`)으로 이미 채워져 있으니, 저장소 이름이나 계정명을 다르게 하셨다면 `image` 값을 맞게 수정해주세요.
 
 ### 새 글을 추가할 때
 `posts/shared.json`에 새 글을 추가하면, `scripts/generate_cards.py`의 `CARD_DATA` 딕셔너리에도 해당 id로 `title`(카드 제목) / `highlights`(핵심 3줄) / `category`(색상 테마용 태그)를 추가하고 스크립트를 다시 실행해야 카드가 생성됩니다. 그 다음 새로 생성된 PNG를 이미지 호스팅 저장소에도 업로드해야 합니다.
