@@ -1,13 +1,4 @@
 {
-  "queue": [
-    "info-038",
-    "info-012",
-    "info-006",
-    "info-023",
-    "info-008",
-    "info-025",
-    "info-028",
-    "info-022"
-  ],
+  "queue": [],
   "cycle": 3
 }
