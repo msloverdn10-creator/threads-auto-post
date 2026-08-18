@@ -138,6 +138,20 @@ CARD_DATA = {
                  "highlights": ["1종은 10년마다 갱신", "2종은 65세 이후 5년마다", "미갱신시 면허 효력정지"]},
     "info-048": {"title": "장기전세주택(시프트)", "category": "부동산",
                  "highlights": ["시세보다 저렴한 임대료", "최장 20년 거주 가능", "무주택자 청약시 우대"]},
+    "info-049": {"title": "냉방병 예방법", "category": "안전",
+                 "highlights": ["실내외 온도차 5도 이내 유지", "1시간마다 환기하기", "물 충분히 마시기"]},
+    "info-050": {"title": "부모급여", "category": "복지",
+                 "highlights": ["만 0세 월 100만원", "만 1세 월 50만원", "출생 후 60일 이내 신청"]},
+    "info-051": {"title": "서울 전기 이륜차 보조금", "category": "금융",
+                 "highlights": ["차종별 차등 지급", "예산 소진시 조기마감", "의무운행기간 통상 2년"]},
+    "info-052": {"title": "아동수당", "category": "복지",
+                 "highlights": ["만 8세 미만 대상", "1인당 월 10만원", "매월 25일 계좌 입금"]},
+    "info-053": {"title": "육아휴직급여 2026", "category": "복지",
+                 "highlights": ["1~3개월 최대 250만원", "4~6개월 최대 200만원", "사후지급금 완전 폐지"]},
+    "info-054": {"title": "첫만남이용권", "category": "복지",
+                 "highlights": ["첫째 200만원, 둘째+ 300만원", "출생 후 60일 이내 신청", "국민행복카드로 지급"]},
+    "info-055": {"title": "출산·육아 지원금 총정리", "category": "복지",
+                 "highlights": ["첫만남이용권·부모급여·아동수당", "육아휴직급여·출산축하금", "제도별 신청기한 확인 필수"]},
 }
 
 
@@ -174,12 +188,13 @@ def make_card(post_id, data, output_path):
     img = Image.new("RGB", CARD_SIZE, bg_color)
     draw = ImageDraw.Draw(img)
 
-    # 살짝 어두운 하단 그라데이션 느낌을 주기 위한 오버레이 사각형 (단순화된 그라데이션)
-    overlay_height = 260
-    for i in range(overlay_height):
-        alpha_ratio = i / overlay_height
-        shade = tuple(max(0, int(c * (1 - 0.35 * alpha_ratio))) for c in bg_color)
-        y = CARD_SIZE[1] - overlay_height + i
+    # 위->아래로 더 뚜렷한 그라데이션 (Threads/IG 카드뉴스에서 흔한, 톤이 살아있는 배경)
+    for y in range(CARD_SIZE[1]):
+        ratio = y / CARD_SIZE[1]
+        shade = tuple(
+            min(255, max(0, int(c * (1 - 0.28 * ratio) + 25 * ratio)))
+            for c in bg_color
+        )
         draw.line([(0, y), (CARD_SIZE[0], y)], fill=shade)
 
     margin = 80
@@ -195,27 +210,42 @@ def make_card(post_id, data, output_path):
     draw_rounded_rect(draw, tag_box, radius=999, fill=(255, 255, 255))
     draw.text((tag_box[0] + tag_pad_x, tag_box[1] + tag_pad_y - 4), tag_text, font=tag_font, fill=bg_color)
 
-    # 제목
-    title_font = get_font(FONT_BLACK, 78)
-    title_top = tag_box[3] + 70
+    # 제목 (더 크고 굵게) + 강조 밑줄 바
+    title_font = get_font(FONT_BLACK, 82)
+    title_top = tag_box[3] + 66
     title_lines = wrap_text(draw, data["title"], title_font, CARD_SIZE[0] - margin * 2)
     y = title_top
     for line in title_lines:
         draw.text((margin, y), line, font=title_font, fill=(255, 255, 255))
         line_bbox = draw.textbbox((0, 0), line, font=title_font)
-        y += (line_bbox[3] - line_bbox[1]) + 22
+        y += (line_bbox[3] - line_bbox[1]) + 20
 
-    # 흰색 카드 패널 (하이라이트 영역)
-    panel_top = y + 50
-    panel_bottom = CARD_SIZE[1] - 170
+    underline_y = y + 6
+    draw.rounded_rectangle(
+        [margin, underline_y, margin + 110, underline_y + 10], radius=5, fill=accent_color
+    )
+
+    # 흰색 카드 패널 - 그림자(살짝 어두운 사본을 아래쪽으로 오프셋) + 본 패널
+    panel_top = underline_y + 56
+    panel_bottom = CARD_SIZE[1] - 200
     panel_box = [margin, panel_top, CARD_SIZE[0] - margin, panel_bottom]
+
+    shadow_offset = 14
+    shadow_color = tuple(max(0, int(c * 0.65)) for c in bg_color)
+    draw_rounded_rect(
+        draw,
+        [panel_box[0] + shadow_offset, panel_box[1] + shadow_offset,
+         panel_box[2] + shadow_offset, panel_box[3] + shadow_offset],
+        radius=36, fill=shadow_color,
+    )
     draw_rounded_rect(draw, panel_box, radius=36, fill=(255, 255, 255))
 
-    # 하이라이트 3줄
-    hi_font = get_font(FONT_MEDIUM, 40)
-    bullet_font = get_font(FONT_BOLD, 40)
+    # 하이라이트 - 원형 번호 배지 + 텍스트 (플랫 불릿 대신 번호가 있는 배지로 시선을 끎)
+    hi_font = get_font(FONT_BOLD, 42)
+    badge_font = get_font(FONT_BLACK, 34)
     inner_margin = 56
-    text_max_width = (panel_box[2] - panel_box[0]) - inner_margin * 2 - 60
+    badge_r = 30
+    text_max_width = (panel_box[2] - panel_box[0]) - inner_margin - badge_r * 2 - 40 - inner_margin
 
     highlights = data["highlights"]
     n = len(highlights)
@@ -226,19 +256,25 @@ def make_card(post_id, data, output_path):
         row_top = panel_top + row_height * idx
         text_y = row_top + row_height / 2
 
-        # 불릿 원
-        circle_r = 10
-        circle_cy = text_y
-        circle_cx = panel_box[0] + inner_margin + circle_r
+        badge_cx = panel_box[0] + inner_margin + badge_r
+        badge_cy = text_y
         draw.ellipse(
-            [circle_cx - circle_r, circle_cy - circle_r, circle_cx + circle_r, circle_cy + circle_r],
+            [badge_cx - badge_r, badge_cy - badge_r, badge_cx + badge_r, badge_cy + badge_r],
             fill=bg_color,
+        )
+        num_text = str(idx + 1)
+        num_bbox = draw.textbbox((0, 0), num_text, font=badge_font)
+        num_w = num_bbox[2] - num_bbox[0]
+        num_h = num_bbox[3] - num_bbox[1]
+        draw.text(
+            (badge_cx - num_w / 2 - num_bbox[0], badge_cy - num_h / 2 - num_bbox[1]),
+            num_text, font=badge_font, fill=(255, 255, 255),
         )
 
         lines = wrap_text(draw, h, hi_font, text_max_width)
-        text_x = circle_cx + circle_r + 26
+        text_x = badge_cx + badge_r + 32
         line_bbox = draw.textbbox((0, 0), "가", font=hi_font)
-        line_h = (line_bbox[3] - line_bbox[1]) + 10
+        line_h = (line_bbox[3] - line_bbox[1]) + 12
         total_text_h = line_h * len(lines)
         ty = text_y - total_text_h / 2
         for line in lines:
@@ -253,11 +289,29 @@ def make_card(post_id, data, output_path):
                 width=2,
             )
 
-    # 하단 브랜드 표시
-    footer_font = get_font(FONT_BOLD, 34)
-    footer_text = "정보 카드 · 지원금 안내"
-    footer_y = CARD_SIZE[1] - 110
-    draw.text((margin, footer_y), footer_text, font=footer_font, fill=(255, 255, 255))
+    # 하단 CTA 바 - Threads 카드뉴스에서 흔한 "더보기" 유도 바
+    cta_top = panel_bottom + 34
+    cta_box = [margin, cta_top, CARD_SIZE[0] - margin, cta_top + 96]
+    draw_rounded_rect(draw, cta_box, radius=24, fill=(255, 255, 255))
+    cta_font = get_font(FONT_BOLD, 38)
+    cta_text = "자세히 보기"
+    cta_bbox = draw.textbbox((0, 0), cta_text, font=cta_font)
+    cta_text_h = cta_bbox[3] - cta_bbox[1]
+    cta_text_y = cta_box[1] + (96 - cta_text_h) / 2 - cta_bbox[1]
+    draw.text((cta_box[0] + 40, cta_text_y), cta_text, font=cta_font, fill=bg_color)
+
+    # 화살표 아이콘 (간단한 삼각형)
+    arrow_cx = cta_box[2] - 60
+    arrow_cy = (cta_box[1] + cta_box[3]) / 2
+    arrow_size = 16
+    draw.polygon(
+        [
+            (arrow_cx - arrow_size / 2, arrow_cy - arrow_size),
+            (arrow_cx - arrow_size / 2, arrow_cy + arrow_size),
+            (arrow_cx + arrow_size, arrow_cy),
+        ],
+        fill=bg_color,
+    )
 
     img.save(output_path, "PNG")
 
