@@ -240,6 +240,27 @@ curl "https://graph.threads.net/v1.0/me?fields=id,username&access_token=여기�
 - 글 풀은 현재 55개(냉방병 예방법, 부모급여, 서울 전기 이륜차 보조금, 아동수당, 육아휴직급여, 첫만남이용권, 출산지원금 7개 추가)입니다. 현재 계정 수는 8개(account9, 10은 Meta 정책 위반 소명 절차로 임시 제외 중)이며, 글 풀은 계정 수보다 항상 많아야 매 실행 무중복이 보장되니 계정을 다시 늘릴 때 글도 함께 확인해주세요.
 - 이미지 호스팅 계정이 `msloverdn10-creator`로 변경되어, `image` 필드가 전부 `https://msloverdn10-creator.github.io/threads-post-cards/{id}.png` 패턴으로 되어 있습니다.
 
+## 콘텐츠 신선도(최신성) 자동 점검 (9차 수정)
+
+블로그/글 내용이 시간이 지나면서 오래된 정보가 될 수 있어, 이를 자동으로 추적하는 가벼운 시스템을 추가했습니다.
+
+### 동작 방식
+- `posts/shared.json`의 각 글에 `last_verified`(마지막 확인일, YYYY-MM-DD) 필드가 추가됨
+- `scripts/check_freshness.py`가 매주 월요일 자동 실행되어, 마지막 확인일로부터 **90일 이상 지난 글**을 찾아 저장소 루트의 `REVIEW_NEEDED.md`에 정리
+- 이 스크립트는 사실관계를 직접 검증하지 않습니다 — "오래됐으니 다시 봐야 한다"는 표시만 자동으로 남깁니다. 실제 사실 재검증은 Claude에게 요청해서 진행합니다.
+
+### 사용 흐름
+1. 매주 자동으로 `REVIEW_NEEDED.md`가 갱신됨 (재검토 필요한 글이 있으면 표에 뜸)
+2. 저장소에서 이 파일을 열어 확인
+3. Claude와의 대화에 "REVIEW_NEEDED.md에 이런 글들이 있는데 최신 정보로 다시 확인해줘"라고 요청
+4. 검증 결과에 따라 `posts/shared.json`의 내용을 갱신하고, 그 글의 `last_verified` 날짜도 오늘 날짜로 업데이트
+
+### 기준 일수를 바꾸고 싶다면
+`scripts/check_freshness.py`의 `STALE_THRESHOLD_DAYS = 90` 값만 바꾸면 됩니다.
+
+### 새 글을 추가할 때
+새 글을 `posts/shared.json`에 추가할 때 반드시 `last_verified` 필드도 함께 넣어주세요 (그 글의 정보를 실제로 확인한 날짜).
+
 ## 카드뉴스 디자인 (8차 수정) — 더 눈에 띄게 개선
 
 기존 카드는 단순한 점(bullet) + 밋밋한 배경이라 다른 정보성 콘텐츠와 차별화가 안 됐습니다. `scripts/generate_cards.py`의 `make_card()` 함수를 아래처럼 손봤습니다.
