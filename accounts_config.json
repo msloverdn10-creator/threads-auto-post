@@ -2,9 +2,7 @@
   { "name": "account1", "token_secret": "ACCOUNT1_TOKEN", "id_secret": "ACCOUNT1_ID", "posts_file": "shared.json" },
   { "name": "account2", "token_secret": "ACCOUNT2_TOKEN", "id_secret": "ACCOUNT2_ID", "posts_file": "shared.json" },
   { "name": "account3", "token_secret": "ACCOUNT3_TOKEN", "id_secret": "ACCOUNT3_ID", "posts_file": "shared.json" },
-  { "name": "account4", "token_secret": "ACCOUNT4_TOKEN", "id_secret": "ACCOUNT4_ID", "posts_file": "shared.json" },
   { "name": "account5", "token_secret": "ACCOUNT5_TOKEN", "id_secret": "ACCOUNT5_ID", "posts_file": "shared.json" },
   { "name": "account6", "token_secret": "ACCOUNT6_TOKEN", "id_secret": "ACCOUNT6_ID", "posts_file": "shared.json" },
-  { "name": "account7", "token_secret": "ACCOUNT7_TOKEN", "id_secret": "ACCOUNT7_ID", "posts_file": "shared.json" },
   { "name": "account8", "token_secret": "ACCOUNT8_TOKEN", "id_secret": "ACCOUNT8_ID", "posts_file": "shared.json" }
 ]

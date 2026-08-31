@@ -24,7 +24,9 @@ from nacl import encoding, public
 GRAPH_REFRESH_URL = "https://graph.threads.net/refresh_access_token"
 GITHUB_API = "https://api.github.com"
 
-ACCOUNT_NAMES = [f"ACCOUNT{i}" for i in range(1, 9)]  # account9, 10은 Meta 제한 조치로 임시 제외 (재추가 시 range(1, 11)로 복원)
+# 활성 계정만 명시적으로 나열 (9,10: Meta 정책위반 소명 중 / 4,7: 체크포인트 필요로 자동화 제외)
+ACTIVE_ACCOUNT_NUMBERS = [1, 2, 3, 5, 6, 8]
+ACCOUNT_NAMES = [f"ACCOUNT{i}" for i in ACTIVE_ACCOUNT_NUMBERS]
 
 
 def refresh_token(current_token):
